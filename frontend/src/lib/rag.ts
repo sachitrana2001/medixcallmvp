@@ -1,7 +1,19 @@
 import { supabase } from "./supabase";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Lazy OpenAI client initialization
+let openaiClient: OpenAI | null = null;
+
+const getOpenAIClient = () => {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY environment variable is missing");
+    }
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+};
 
 // Cache for lead language preferences
 const leadLanguageCache = new Map();
@@ -64,7 +76,7 @@ export async function generateLeadReply(
         ? "You are a Hinglish-speaking PCD Franchise assistant. Respond concisely and professionally using Hinglish (Hindi mixed with English). Use natural Hinglish expressions that are commonly used in India. Mix Hindi and English naturally - use Hindi for conversational parts and English for technical/business terms. Be warm and professional. Focus on PCD Franchise opportunities, monopoly rights, district access, and business benefits. Keep responses under 50 words for faster conversation flow."
         : "You are a PCD Franchise assistant. Respond concisely and professionally. Keep responses under 50 words for faster conversation flow.";
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },

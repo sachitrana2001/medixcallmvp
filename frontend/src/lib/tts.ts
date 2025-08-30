@@ -3,9 +3,19 @@ import path from "path";
 import OpenAI from "openai";
 import crypto from "crypto";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy OpenAI client initialization
+let openaiClient: OpenAI | null = null;
+
+const getOpenAIClient = () => {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY environment variable is missing");
+    }
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+};
 
 // Cache for TTS files to avoid regeneration (memory only)
 const ttsCache = new Map();
@@ -44,7 +54,7 @@ export async function synthesizeTTS(
 
   try {
     // Call OpenAI TTS (text-to-speech)
-    const response = await openai.audio.speech.create({
+    const response = await getOpenAIClient().audio.speech.create({
       model: model,
       voice: voice,
       input: text,

@@ -3,7 +3,19 @@ import { createServerSupabaseClient } from "../../../../lib/supabase";
 import OpenAI from "openai";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Lazy OpenAI client initialization
+let openaiClient: OpenAI | null = null;
+
+const getOpenAIClient = () => {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY environment variable is missing");
+    }
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+};
 
 export async function POST(req: NextRequest) {
   const supabase = createServerSupabaseClient();
@@ -119,7 +131,7 @@ export async function POST(req: NextRequest) {
       const chunkText = chunks[i];
 
       try {
-        const embeddingResponse = await openai.embeddings.create({
+        const embeddingResponse = await getOpenAIClient().embeddings.create({
           model: "text-embedding-3-small",
           input: chunkText,
         });

@@ -1,17 +1,30 @@
 import fs from "fs";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Lazy OpenAI client initialization
+let openaiClient: OpenAI | null = null;
 
-export async function transcribeAudio(filePath: string) {
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Audio file not found: ${filePath}`);
+const getOpenAIClient = () => {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY environment variable is missing");
+    }
+    openaiClient = new OpenAI({ apiKey });
   }
+  return openaiClient;
+};
 
-  const audio = fs.createReadStream(filePath);
-  const transcription = await openai.audio.transcriptions.create({
-    file: audio,
-    model: "whisper-1",
-  });
-  return transcription.text;
+export async function transcribeAudio(audioFilePath: string): Promise<string> {
+  try {
+    const audioFile = fs.createReadStream(audioFilePath);
+    const transcript = await getOpenAIClient().audio.transcriptions.create({
+      file: audioFile,
+      model: "whisper-1",
+    });
+    return transcript.text;
+  } catch (error) {
+    console.error("Transcription error:", error);
+    return "Sorry, I couldn't understand that.";
+  }
 }
