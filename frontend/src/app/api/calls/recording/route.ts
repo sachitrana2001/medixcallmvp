@@ -3,9 +3,6 @@ import Twilio from "twilio";
 import fs from "fs";
 import path from "path";
 
-import { transcribeAudio } from "@/lib/whisper";
-import { generateLeadReply } from "@/lib/rag";
-import { synthesizeTTS } from "@/lib/tts";
 import { createServerSupabaseClient } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
@@ -75,6 +72,11 @@ export async function POST(req: NextRequest) {
 
   const audioFilePath = path.join(ttsDir, `lead_${leadId}_turn${turn}.mp3`);
   fs.writeFileSync(audioFilePath, Buffer.from(audioBuffer));
+
+  // Dynamic imports to avoid build-time evaluation
+  const { transcribeAudio } = await import("@/lib/whisper");
+  const { generateLeadReply } = await import("@/lib/rag");
+  const { synthesizeTTS } = await import("@/lib/tts");
 
   // 2️⃣ Transcribe lead
   const transcript = await transcribeAudio(audioFilePath);

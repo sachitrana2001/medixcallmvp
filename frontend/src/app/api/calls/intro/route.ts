@@ -3,7 +3,6 @@ import path from "path";
 import fs from "fs";
 
 import { createServerSupabaseClient } from "../../../../lib/supabase";
-import { synthesizeTTS } from "@/lib/tts";
 import Twilio from "twilio";
 
 export async function POST(req: NextRequest) {
@@ -41,6 +40,9 @@ export async function POST(req: NextRequest) {
     if (!fs.existsSync(ttsDir)) {
       fs.mkdirSync(ttsDir, { recursive: true });
     }
+
+    // Dynamic import to avoid build-time evaluation
+    const { synthesizeTTS } = await import("@/lib/tts");
 
     // Generate TTS for the script
     const ttsFilePath = path.join(ttsDir, `lead_${leadId}_intro.mp3`);
