@@ -55,27 +55,35 @@ export async function POST(req: NextRequest) {
     const context = chunks.map((chunk) => chunk.content).join("\n\n");
 
     // 4️⃣ Generate script using OpenAI
-    const prompt = `Based on the following document content, generate a personalized sales script for ${lead.name} in ${lead.preferred_language} language.
+    const prompt = `Based on the following document content, generate a personalized PCD Franchise script for ${lead.name} in ${lead.preferred_language} language.
 
 Document Content:
 ${context}
 
-Please create a conversational, professional sales script that:
+Please create a conversational, professional PCD Franchise script that:
 1. Addresses the customer by name
 2. Is in the specified language (${lead.preferred_language})
 3. Incorporates relevant information from the document
 4. Is engaging and persuasive
 5. Includes a clear call-to-action
+6. If the language is Hindi, use Hinglish (Hindi mixed with English) - this is more natural for Indian speakers
+7. Keep the script concise and easy to speak naturally
+8. Use common Hinglish phrases like "aapko", "humara", "company", "products", etc.
+9. Focus on PCD Franchise opportunities and business benefits
+10. Include information about monopoly rights, district access, and business terms
 
 Script:`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
           content:
-            "You are a professional sales script writer. Create personalized, engaging sales scripts based on document content.",
+            lead.preferred_language?.toLowerCase() === "hindi" ||
+            lead.preferred_language?.toLowerCase() === "hi"
+              ? "You are a professional Hinglish PCD Franchise script writer. Create personalized, engaging PCD Franchise scripts using Hinglish (Hindi mixed with English) based on document content. Use natural Hinglish expressions that are commonly used in India. Mix Hindi and English naturally - use Hindi for conversational parts and English for technical/business terms. Focus on PCD Franchise opportunities, monopoly rights, district access, and business benefits."
+              : "You are a professional PCD Franchise script writer. Create personalized, engaging PCD Franchise scripts based on document content.",
         },
         {
           role: "user",

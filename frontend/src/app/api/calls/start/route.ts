@@ -62,13 +62,13 @@ export async function POST(req: NextRequest) {
     }
     console.log(
       "Twilio call URL:",
-      `https://fbc303e9bee1.ngrok-free.app/api/calls/intro?leadId=${leadId}`
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/calls/intro?leadId=${leadId}`
     );
     // Create Twilio call
     const call = await twilioClient.calls.create({
       to: lead.phone,
       from: twilioNumber!,
-      url: `https://fbc303e9bee1.ngrok-free.app/api/calls/intro?leadId=${leadId}`, // TwiML endpoint
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/calls/intro?leadId=${leadId}`, // TwiML endpoint
     });
 
     console.log("Twilio call created:", call);
