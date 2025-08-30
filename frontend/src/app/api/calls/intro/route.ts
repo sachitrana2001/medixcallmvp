@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // 1️⃣ Fetch lead information including preferred language
-    const { data: lead, error: leadError } = await supabase
+    const { data: lead } = await supabase
       .from("leads")
       .select("preferred_language")
       .eq("id", Number(leadId))
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const preferredLanguage = lead?.preferred_language || "en";
 
     // 2️⃣ Fetch lead script from Supabase
-    const { data: leadScript, error } = await supabase
+    const { data: leadScript } = await supabase
       .from("lead_scripts")
       .select("script_text")
       .eq("lead_id", Number(leadId))
@@ -64,7 +64,11 @@ export async function POST(req: NextRequest) {
     twiml.play(ttsUrl); // Play OpenAI TTS
 
     // Set recording language hint
-    const recordOptions: any = {
+    const recordOptions: {
+      maxLength: number;
+      action: string;
+      language?: string;
+    } = {
       maxLength: 10,
       action: `/api/calls/recording?leadId=${leadId}&turn=1`,
     };

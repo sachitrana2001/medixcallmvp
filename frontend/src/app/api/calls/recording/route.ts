@@ -105,7 +105,11 @@ export async function POST(req: NextRequest) {
   twiml.play(ttsUrl);
 
   // Set recording language hint
-  const recordOptions: any = {
+  const recordOptions: {
+    maxLength: number;
+    action: string;
+    language?: string;
+  } = {
     maxLength: 8,
     action: `/api/calls/recording?leadId=${leadId}&turn=${turn + 1}`,
   };

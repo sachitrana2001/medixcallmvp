@@ -1,37 +1,44 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useEffect, useState, useCallback } from 'react';
+
+interface Lead {
+    id: number;
+    name: string;
+    phone: string;
+    preferred_language: string;
+    doc_id: number;
+}
 
 const PAGE_SIZE = 5; // adjust per page
 
 export default function LeadsPage() {
-    const [leads, setLeads] = useState<any[]>([]);
+    const [leads, setLeads] = useState<Lead[]>([]);
     const [filterLang, setFilterLang] = useState('');
     const [filterDoc, setFilterDoc] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [totalLeads, setTotalLeads] = useState(0);
 
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
         const params = new URLSearchParams({
-          language: filterLang,
-          doc_id: filterDoc,
-          search,
-          page: page.toString(),
-          pageSize: PAGE_SIZE.toString(),
+            language: filterLang,
+            doc_id: filterDoc,
+            search,
+            page: page.toString(),
+            pageSize: PAGE_SIZE.toString(),
         });
-      
+
         const res = await fetch(`/api/leads/list?${params.toString()}`);
         const json = await res.json();
-      
+
         setLeads(json.data || []);
         setTotalLeads(json.count || 0);
-      };
-      
+    }, [filterLang, filterDoc, search, page]);
+
 
     useEffect(() => {
         fetchLeads();
-    }, [filterLang, filterDoc, search, page]);
+    }, [fetchLeads]);
 
     const totalPages = Math.ceil(totalLeads / PAGE_SIZE);
 

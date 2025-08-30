@@ -85,26 +85,29 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, callSid: call.sid });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error in /api/calls/start:", err);
 
+    // Type guard for error with code property
+    const error = err as { code?: string; message?: string; stack?: string };
+
     // Provide more specific error messages
-    if (err.code === 21211) {
+    if (error.code === "21211") {
       return NextResponse.json(
         { error: "Invalid phone number format" },
         { status: 400 }
       );
-    } else if (err.code === 21214) {
+    } else if (error.code === "21214") {
       return NextResponse.json(
         { error: "Phone number is not mobile" },
         { status: 400 }
       );
-    } else if (err.code === 21608) {
+    } else if (error.code === "21608") {
       return NextResponse.json(
         { error: "Invalid Twilio credentials" },
         { status: 500 }
       );
-    } else if (err.code === 21614) {
+    } else if (error.code === "21614") {
       return NextResponse.json(
         { error: "Invalid Twilio phone number" },
         { status: 500 }
@@ -113,8 +116,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        error: err.message || "Internal server error",
-        details: process.env.NODE_ENV === "development" ? err.stack : undefined,
+        error: error.message || "Internal server error",
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
       { status: 500 }
     );

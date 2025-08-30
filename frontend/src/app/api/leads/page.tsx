@@ -1,23 +1,31 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../../lib/supabase';
 
+interface Lead {
+  id: number;
+  name: string;
+  phone: string;
+  preferred_language: string;
+  doc_id: number;
+}
+
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<any[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [filterLang, setFilterLang] = useState('');
 
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     let query = supabase.from('leads').select('*');
     if (filterLang) query = query.eq('preferred_language', filterLang);
 
     const { data, error } = await query;
     if (error) console.error(error);
     else setLeads(data || []);
-  };
+  }, [filterLang]);
 
   useEffect(() => {
     fetchLeads();
-  }, [filterLang]);
+  }, [fetchLeads]);
 
   return (
     <div className="p-4">

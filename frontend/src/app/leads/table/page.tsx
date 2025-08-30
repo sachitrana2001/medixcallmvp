@@ -1,12 +1,19 @@
 "use client";
 import { useEffect, useState } from 'react';
 
-type Lead = { id: number; name: string; preferred_language: string; doc_id: number; script?: string };
+interface Lead {
+  id: number;
+  name: string;
+  preferred_language: string;
+  doc_id: number;
+  script?: string;
+  phone: string;
+}
 
 export default function LeadsTable() {
   const [loading, setLoading] = useState<number | null>(null);
   const [leadScripts, setLeadScripts] = useState<Record<number, string>>({});
-  const [leads, setLeads] = useState<any[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingCall, setLoadingCall] = useState<number | null>(null);
 
   const generateScript = async (leadId: number) => {
@@ -25,7 +32,7 @@ export default function LeadsTable() {
       } else {
         alert(data.error || 'Failed to generate script');
       }
-    } catch (err) {
+    } catch {
       alert('Error generating script');
     } finally {
       setLoading(null);
@@ -33,8 +40,6 @@ export default function LeadsTable() {
   };
 
   const fetchLeads = async () => {
-    // const params = new URLSearchParams);
-
     const res = await fetch(`/api/leads/list`);
     const json = await res.json();
 
@@ -50,7 +55,7 @@ export default function LeadsTable() {
       });
       const data = await res.json();
       if (!data.success) alert(data.error || 'Call failed');
-    } catch (err) {
+    } catch {
       alert('Error starting call');
     } finally {
       setLoadingCall(null);

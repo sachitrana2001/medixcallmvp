@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "../../../../lib/supabase";
 import OpenAI from "openai";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import pdf from "pdf-parse";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -26,52 +25,36 @@ export async function POST(req: NextRequest) {
     // Look for the file content between the form boundaries
     const lines = rawData.split("\n");
     let inFileSection = false;
-    let fileLines: string[] = [];
+    const fileLines: string[] = [];
 
     for (const line of lines) {
-      const trimmedLine = line.trim();
-
-      // Skip form boundary lines
-      if (trimmedLine.startsWith("------WebKitFormBoundary")) {
-        inFileSection = false;
-        continue;
-      }
-
-      // Look for Content-Disposition to get filename
-      if (trimmedLine.startsWith("Content-Disposition:")) {
-        const filenameMatch = trimmedLine.match(/filename="([^"]+)"/);
+      // Extract filename from Content-Disposition header
+      if (line.includes('Content-Disposition: form-data; name="file"')) {
+        const filenameMatch = line.match(/filename="([^"]+)"/);
         if (filenameMatch) {
           fileName = filenameMatch[1];
         }
+        inFileSection = true;
         continue;
       }
-
-      // Look for Content-Type
-      if (trimmedLine.startsWith("Content-Type:")) {
-        const contentTypeMatch = trimmedLine.match(
-          /Content-Type:\s*([^\r\n]+)/
-        );
-        if (contentTypeMatch) {
-          fileType = contentTypeMatch[1];
-        }
+      if (inFileSection && line.trim() === "") {
         continue;
       }
-
-      // Skip empty lines and metadata
-      if (trimmedLine === "" || trimmedLine.startsWith("Content-")) {
-        continue;
+      if (inFileSection && line.includes("--")) {
+        break;
       }
-
-      // If we find content that's not metadata, collect it
-      if (
-        !trimmedLine.startsWith("Content-") &&
-        !trimmedLine.startsWith("------")
-      ) {
-        fileLines.push(trimmedLine);
+      if (inFileSection) {
+        fileLines.push(line);
       }
     }
 
     fileContent = fileLines.join("\n");
+
+    // Determine file type based on content
+    if (fileContent.startsWith("%PDF")) {
+      fileType = "application/pdf";
+    }
+
     console.log("Extracted file data:", {
       fileName,
       fileType,
@@ -90,6 +73,9 @@ export async function POST(req: NextRequest) {
 
     if (fileType === "application/pdf") {
       try {
+        // Dynamic import to avoid build-time issues
+        const pdf = (await import("pdf-parse")).default;
+
         // Convert the PDF content to a Buffer
         const buffer = Buffer.from(fileContent, "binary");
         const pdfData = await pdf(buffer);

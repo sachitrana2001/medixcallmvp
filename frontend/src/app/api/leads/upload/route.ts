@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     // Look for the CSV content between the form boundaries
     const lines = rawData.split("\n");
     let inCsvSection = false;
-    let csvLines: string[] = [];
+    const csvLines: string[] = [];
 
     for (const line of lines) {
       const trimmedLine = line.trim();
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       const values = line.split(",").map((v) => v.trim());
       console.log(`Line ${i + 1} values:`, values); // Debug log
 
-      const row: any = {};
+      const row: Record<string, string> = {};
 
       headers.forEach((header, index) => {
         row[header] = values[index] || "";

@@ -18,7 +18,7 @@ export async function generateLeadReply(
     let preferredLanguage = language;
 
     if (!leadLanguageCache.has(leadId)) {
-      const { data: lead, error: leadError } = await supabase
+      const { data: lead } = await supabase
         .from("leads")
         .select("preferred_language")
         .eq("id", leadId)
@@ -35,7 +35,7 @@ export async function generateLeadReply(
     const chunksCacheKey = `chunks-${leadId}`;
 
     if (!chunksCache.has(chunksCacheKey)) {
-      const { data: chunks, error } = await supabase
+      const { data: chunks } = await supabase
         .from("doc_chunks")
         .select("content")
         .limit(5);
