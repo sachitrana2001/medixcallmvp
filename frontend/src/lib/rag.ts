@@ -8,6 +8,14 @@ const leadLanguageCache = new Map();
 // Cache for document chunks
 const chunksCache = new Map();
 
+interface Lead {
+  preferred_language?: string;
+}
+
+interface DocChunk {
+  content: string;
+}
+
 export async function generateLeadReply(
   leadId: string,
   leadTranscript: string,
@@ -24,7 +32,9 @@ export async function generateLeadReply(
         .eq("id", leadId)
         .single();
 
-      preferredLanguage = lead?.preferred_language || language;
+      preferredLanguage = lead
+        ? (lead as Lead).preferred_language || language
+        : language;
       leadLanguageCache.set(leadId, preferredLanguage);
     } else {
       preferredLanguage = leadLanguageCache.get(leadId);
@@ -40,7 +50,8 @@ export async function generateLeadReply(
         .select("content")
         .limit(5);
 
-      context = chunks?.map((c) => c.content).join("\n\n") || "";
+      context =
+        (chunks as DocChunk[])?.map((c) => c.content).join("\n\n") || "";
       chunksCache.set(chunksCacheKey, context);
     } else {
       context = chunksCache.get(chunksCacheKey);
